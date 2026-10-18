@@ -15,7 +15,7 @@
     return PA.dex[(x >>> 0) % PA.dex.length].id;
   }
 
-  const S = { mode: "daily", secret: null, guesses: [], won: false, hintsOn: store.get("pm-hints", true), hintsSeen: false };
+  const S = { mode: "daily", secret: null, guesses: [], won: false, revealed: [] };
   let el = {};
 
   function compare(g, s) {
@@ -36,7 +36,7 @@
   const pool = () => S.mode === "daily" ? PA.dex : PA.pool();
 
   function saveDaily() {
-    if (S.mode === "daily") store.set("pm-daily", { day: dailyNum(), guesses: S.guesses.map(p => p.id), won: S.won });
+    if (S.mode === "daily") store.set("pm-daily", { day: dailyNum(), guesses: S.guesses.map(p => p.id), won: S.won, revealed: S.revealed });
   }
   function startDaily() {
     S.mode = "daily";
@@ -44,12 +44,12 @@
     const saved = store.get("pm-daily", null);
     S.guesses = saved && saved.day === dailyNum() ? saved.guesses.map(id => PA.byId.get(id)).filter(Boolean) : [];
     S.won = S.guesses.some(p => p.id === S.secret.id);
-    S.hintsSeen = false;
+    S.revealed = saved && saved.day === dailyNum() ? saved.revealed || [] : [];
     render(false);
   }
   function startFree() {
     S.mode = "free";
-    S.secret = PA.rand(PA.pool()); S.guesses = []; S.won = false; S.hintsSeen = false;
+    S.secret = PA.rand(PA.pool()); S.guesses = []; S.won = false; S.revealed = [];
     render(false);
   }
 
@@ -60,6 +60,8 @@
     el.dailyNum.textContent = "#" + dailyNum();
     el.tries.textContent = S.guesses.length;
     el.poolLabel.textContent = S.mode === "daily" ? "Toutes les régions · le même Pokémon pour tout le monde" : "";
+    // Le défi du jour couvre toujours toutes les régions : pas de choix de régions dans ce mode
+    el.regions.hidden = S.mode === "daily";
     renderHints(); renderBoard(animateLast); renderResult(); renderStats();
     el.ac.input.disabled = S.won;
     el.ac.input.placeholder = S.won ? "Trouvé ! Lance une partie libre pour rejouer." : "Tape le nom d'un Pokémon… (ex. Pikachu)";
@@ -72,18 +74,23 @@
     { at: 7, label: "Silhouette", sil: true },
     { at: 10, label: "Initiale", get: s => `Commence par « ${s.name[0]} », ${s.name.length} lettres` },
   ];
+  /* Un indice se débloque après un certain nombre d'essais, mais ne s'affiche
+     que si le joueur clique dessus. */
   function renderHints() {
-    el.hintToggle.setAttribute("aria-checked", S.hintsOn);
-    el.hintToggle.querySelector("span").textContent = S.hintsOn ? "activés" : "désactivés";
-    el.hints.hidden = !S.hintsOn;
-    if (!S.hintsOn) return;
-    // Sert au texte de partage : un indice a-t-il été visible pendant la partie ?
-    if (!S.won && S.guesses.length >= HINTS[0].at) S.hintsSeen = true;
-    el.hints.replaceChildren(...HINTS.map(x => {
-      const open = S.guesses.length >= x.at || S.won, left = x.at - S.guesses.length;
-      const d = h("div", { className: "hint" + (open ? "" : " locked") });
-      if (open && x.sil) d.append(spr(S.secret.id, 48, S.won ? "" : "shadow"));
-      d.append(h("div", { innerHTML: `<strong>${x.label}</strong><br>` + (open ? (x.sil ? (S.won ? S.secret.name : "Qui est-ce ?") : x.get(S.secret)) : `dans ${left} essai${left > 1 ? "s" : ""}`) }));
+    el.hints.replaceChildren(...HINTS.map((x, i) => {
+      const unlocked = S.guesses.length >= x.at, left = x.at - S.guesses.length;
+      const shown = S.won || S.revealed.includes(i);
+      const d = h("div", { className: "hint" + (unlocked || S.won ? "" : " locked") });
+      if (shown) {
+        if (x.sil) d.append(spr(S.secret.id, 48, S.won ? "" : "shadow"));
+        d.append(h("div", { innerHTML: `<strong>${x.label}</strong><br>` + (x.sil ? (S.won ? S.secret.name : "Qui est-ce ?") : x.get(S.secret)) }));
+      } else if (unlocked) {
+        const b = h("button", { type: "button", className: "btn", textContent: "Voir l'indice" });
+        b.onclick = () => { S.revealed.push(i); saveDaily(); renderHints(); };
+        d.append(h("div", { innerHTML: `<strong>${x.label}</strong><br>` }, b));
+      } else {
+        d.append(h("div", { innerHTML: `<strong>${x.label}</strong><br>débloqué dans ${left} essai${left > 1 ? "s" : ""}` }));
+      }
       return d;
     }));
   }
@@ -111,7 +118,7 @@
     const e = { ok: "🟩", part: "🟧", bad: "🟥" };
     const head = S.mode === "daily" ? `PokéMotus #${dailyNum()}` : "PokéMotus (partie libre)";
     const lines = S.guesses.map(g => { const r = compare(g, S.secret); return COLS_DEF.slice(1).map(c => e[r[c.key].r]).join(""); });
-    return `${head} · trouvé en ${S.guesses.length} essai${S.guesses.length > 1 ? "s" : ""}${S.hintsSeen ? "" : " · sans indices"}\n` + lines.join("\n");
+    return `${head} · trouvé en ${S.guesses.length} essai${S.guesses.length > 1 ? "s" : ""}${S.revealed.length ? ` · ${S.revealed.length} indice${S.revealed.length > 1 ? "s" : ""}` : " · sans indices"}\n` + lines.join("\n");
   }
 
   function renderResult() {
@@ -171,7 +178,6 @@
             <div>Essais <b data-k="tries">0</b></div>
             <div data-k="dailyLabel">Défi <b data-k="dailyNum">#1</b></div>
             <div class="sep"></div><div data-k="poolLabel"></div>
-            <button type="button" class="switch" role="switch" data-k="hintToggle"><i aria-hidden="true"></i>Indices : <span>activés</span></button>
           </div>
           <div data-k="regionSlot"></div>
           <div data-k="acSlot"></div>
@@ -190,13 +196,12 @@
         </div>
         <div class="stats" data-k="stats"></div>`;
       root.querySelectorAll("[data-k]").forEach(n => el[n.dataset.k] = n);
-      el.regions = PA.regionPicker(undefined, " · clique un starter pour choisir les régions de la partie libre");
+      el.regions = PA.regionPicker();
       el.regionSlot.replaceWith(el.regions);
       el.ac = PA.autocomplete({ candidates: () => pool().filter(p => !S.guesses.some(g => g.id === p.id)), onPick: guess });
       el.acSlot.replaceWith(el.ac.el);
       el.emptySpr.replaceWith(spr(25, 56, "shadow"));
       el.daily.onclick = startDaily;
-      el.hintToggle.onclick = () => { S.hintsOn = !S.hintsOn; store.set("pm-hints", S.hintsOn); render(false); };
       el.free.onclick = () => { if (S.mode !== "free") startFree(); };
       // Choisir des régions lance une partie libre sur ces régions
       PA.onRegions(() => { if (!root.hidden || S.mode === "free") startFree(); });

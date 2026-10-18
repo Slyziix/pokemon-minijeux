@@ -155,6 +155,7 @@
     el.daily.setAttribute("aria-pressed", S.mode === "daily");
     el.free.setAttribute("aria-pressed", S.mode === "free");
     el.label.textContent = S.mode === "daily" ? `Grille du jour #${dailyNum()} · toutes les régions` : "Partie libre";
+    el.regions.hidden = S.mode === "daily";
     if (!S.groups) {
       el.found.replaceChildren(); el.grid.replaceChildren();
       el.msg.textContent = "Impossible de former cinq familles avec ces régions. Ajoute une région ou deux.";
@@ -222,7 +223,8 @@
         <div class="win fam-end" data-k="end" hidden></div>
         <p class="legend">Les familles vont de la plus évidente (jaune) à la plus vicieuse (rose). Couleurs et habitats suivent le classement officiel du Pokédex ; les faiblesses ne tiennent compte que des types, pas des talents.</p>`;
       sec.querySelectorAll("[data-k]").forEach(n => el[n.dataset.k] = n);
-      el.regionSlot.replaceWith(PA.regionPicker(undefined, " · clique un starter pour une partie libre sur ces régions"));
+      el.regions = PA.regionPicker();
+      el.regionSlot.replaceWith(el.regions);
       el.daily.onclick = startDaily;
       el.free.onclick = () => startFree();
       el.shuffle.onclick = () => { S.order = shuffle(S.order, Math.random); render(); };
