@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Poké Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Lexend:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <span class="lens" aria-hidden="true"></span>
+    <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <a class="brand" href="#accueil">Poké Arcade</a>
+    <nav id="nav"></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="view-accueil">
+    <div class="hero">
+      <div>
+        <h1>Une borne d'arcade pour dresseurs</h1>
+        <p>Des mini-jeux sur les 1025 Pokémon, des neuf générations. Choisis tes régions en cliquant sur leurs starters, et vise le record.</p>
+      </div>
+      <div class="hero-mons" id="hero-mons" aria-hidden="true"></div>
+    </div>
+    <div class="games" id="games"></div>
+  </section>
+</main>
+
+<script src="js/core.js"></script>
+<script src="js/motus.js"></script>
+<script src="js/familles.js"></script>
+<script src="js/guess.js"></script>
+<script src="js/guess-games.js"></script>
+<script src="js/plus-moins.js"></script>
+<script>PA.boot();</script>
+</body>
+</html>
