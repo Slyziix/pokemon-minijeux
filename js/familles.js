@@ -37,7 +37,7 @@
     ...["Bleu", "Brun", "Vert", "Gris", "Rouge", "Blanc", "Jaune", "Violet", "Rose", "Noir"].map(c => ({ kind: "color", level: 2, label: `Couleur du Pokédex : ${c}`, test: p => p.color === c })),
     ...["Champs", "Forêts", "Marécages", "Montagnes", "Mers", "Urbains", "Grottes", "Milieux hostiles"].map(x => ({ kind: "habitat", level: 2, label: `Habitat : ${x}`, test: p => p.habitat === x })),
     { kind: "legend", level: 2, label: "Légendaires et fabuleux", test: p => p.legendary },
-    { kind: "stage", level: 2, label: "Troisième stade d'évolution", test: p => p.stage === 3 },
+    { kind: "stage", level: 2, label: "Troisième stade d'évolution", test: p => PA.stage(p, G) === 3 },
     { kind: "size", level: 3, label: "Pèsent 300 kg ou plus", test: p => p.weight >= 300 },
     { kind: "size", level: 3, label: "Pèsent 1 kg ou moins", test: p => p.weight <= 1 },
     { kind: "size", level: 3, label: "Mesurent 3 m ou plus", test: p => p.height >= 3 },
@@ -83,6 +83,7 @@
   const EPOCH = Date.UTC(2026, 9, 17);
   const dailyNum = () => { const d = new Date(); return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - EPOCH) / 864e5) + 1; };
 
+  let G = PA.REGIONS.map(r => r.gen); // régions utilisées pour compter les stades
   const S = { mode: "daily", groups: null, order: [], found: [], sel: new Set(), mistakes: 0, history: [], over: false, msg: "" };
   let el = {}, root;
 
@@ -92,6 +93,7 @@
   }
   function startDaily() {
     S.mode = "daily";
+    G = PA.REGIONS.map(r => r.gen);
     setup(generate(PA.dex, mulberry(dailyNum() * 7919)), mulberry(dailyNum()));
     const saved = store.get("pf-daily", null);
     if (saved && saved.day === dailyNum()) {
@@ -101,6 +103,7 @@
   }
   function startFree() {
     S.mode = "free";
+    G = PA.gens;
     setup(generate(PA.pool(), Math.random), Math.random);
     render();
   }

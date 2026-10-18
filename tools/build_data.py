@@ -39,6 +39,14 @@ def stage(sid):
         n += 1
     return n
 
+def ancestor_gens(sid):
+    """Générations des pré-évolutions, de la plus proche à la plus lointaine."""
+    out = []
+    while species[sid]["evolves_from_species_id"]:
+        sid = species[sid]["evolves_from_species_id"]
+        out.append(int(species[sid]["generation_id"]))
+    return out
+
 out = []
 for sid in sorted(species, key=int):
     s, p = species[sid], default_pkmn[sid]
@@ -50,6 +58,7 @@ for sid in sorted(species, key=int):
         "habitat": habitats.get(s["habitat_id"], "Inconnu"),
         "color": colors[s["color_id"]],
         "stage": stage(sid),
+        "pre": ancestor_gens(sid),
         "height": int(p["height"]) / 10,
         "weight": int(p["weight"]) / 10,
         "gen": int(s["generation_id"]),

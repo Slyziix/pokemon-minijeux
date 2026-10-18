@@ -49,6 +49,9 @@ window.PA = (() => {
     document.querySelectorAll(".regions").forEach(drawRegions);
     regionListeners.forEach(fn => fn(PA.gens));
   };
+  /* Stade d'évolution en ne comptant que les pré-évolutions des générations données :
+     en Gén. 1 seule, Pikachu est stade 1 car Pichu (Gén. 2) n'existe pas encore. */
+  PA.stage = (p, gens = PA.gens) => 1 + p.pre.filter(g => gens.includes(g)).length;
   PA.pool = (filter = () => true) => PA.dex.filter(p => PA.gens.includes(p.gen) && filter(p));
 
   /* Un clic sur le starter ajoute ou retire sa région. Si toutes les régions sont actives,

@@ -26,7 +26,8 @@
     out.habitat = { v: g.habitat, r: g.habitat === s.habitat ? "ok" : "bad" };
     out.color = { v: g.color, r: g.color === s.color ? "ok" : "bad" };
     const num = (a, b, fmt) => ({ v: fmt(a), r: a === b ? "ok" : "bad", arrow: a === b ? "" : b > a ? "↑" : "↓" });
-    out.stage = num(g.stage, s.stage, v => "Stade " + v);
+    const gens = S.mode === "daily" ? PA.REGIONS.map(r => r.gen) : PA.gens;
+    out.stage = num(PA.stage(g, gens), PA.stage(s, gens), v => "Stade " + v);
     out.height = num(g.height, s.height, v => v.toLocaleString("fr-FR") + " m");
     out.weight = num(g.weight, s.weight, v => v.toLocaleString("fr-FR") + " kg");
     out.gen = num(g.gen, s.gen, v => "Gén. " + v);
@@ -177,6 +178,7 @@
           <span><i style="background:var(--part)"></i>Partiel (type présent mais à l'autre place)</span>
           <span><i style="background:var(--bad)"></i>Différent</span>
           <span>Habitat connu seulement pour les générations 1 à 3</span>
+          <span>Le stade ne compte que les pré-évolutions des régions jouées</span>
         </div>
         <div class="stats" data-k="stats"></div>`;
       root.querySelectorAll("[data-k]").forEach(n => el[n.dataset.k] = n);
