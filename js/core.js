@@ -106,12 +106,14 @@ window.PA = (() => {
         const li = PA.h("li", {}, b); li.setAttribute("role", "option");
         return li;
       }));
+      list.children[sel]?.scrollIntoView({ block: "nearest" });
     };
     const update = () => {
       const q = PA.norm(input.value);
       if (!q) { matches = []; list.hidden = true; return; }
       const c = candidates();
-      matches = [...c.filter(p => p.key.startsWith(q)), ...c.filter(p => !p.key.startsWith(q) && p.key.includes(q))].slice(0, 8);
+      // Uniquement les noms qui commencent par ce qui est tapé (accents et majuscules ignorés)
+      matches = c.filter(p => p.key.startsWith(q)).slice(0, 50);
       sel = 0; draw();
     };
     const pick = p => { input.value = ""; matches = []; list.hidden = true; onPick(p); input.focus(); };
