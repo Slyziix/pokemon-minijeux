@@ -15,7 +15,7 @@
     return PA.dex[(x >>> 0) % PA.dex.length].id;
   }
 
-  const S = { mode: "daily", secret: null, guesses: [], won: false };
+  const S = { mode: "daily", secret: null, guesses: [], won: false, hintsOn: store.get("pm-hints", true), hintsSeen: false };
   let el = {};
 
   function compare(g, s) {
@@ -44,11 +44,12 @@
     const saved = store.get("pm-daily", null);
     S.guesses = saved && saved.day === dailyNum() ? saved.guesses.map(id => PA.byId.get(id)).filter(Boolean) : [];
     S.won = S.guesses.some(p => p.id === S.secret.id);
+    S.hintsSeen = false;
     render(false);
   }
   function startFree() {
     S.mode = "free";
-    S.secret = PA.rand(PA.pool()); S.guesses = []; S.won = false;
+    S.secret = PA.rand(PA.pool()); S.guesses = []; S.won = false; S.hintsSeen = false;
     render(false);
   }
 
@@ -72,6 +73,12 @@
     { at: 10, label: "Initiale", get: s => `Commence par « ${s.name[0]} », ${s.name.length} lettres` },
   ];
   function renderHints() {
+    el.hintToggle.setAttribute("aria-checked", S.hintsOn);
+    el.hintToggle.querySelector("span").textContent = S.hintsOn ? "activés" : "désactivés";
+    el.hints.hidden = !S.hintsOn;
+    if (!S.hintsOn) return;
+    // Sert au texte de partage : un indice a-t-il été visible pendant la partie ?
+    if (!S.won && S.guesses.length >= HINTS[0].at) S.hintsSeen = true;
     el.hints.replaceChildren(...HINTS.map(x => {
       const open = S.guesses.length >= x.at || S.won, left = x.at - S.guesses.length;
       const d = h("div", { className: "hint" + (open ? "" : " locked") });
@@ -104,7 +111,7 @@
     const e = { ok: "🟩", part: "🟧", bad: "🟥" };
     const head = S.mode === "daily" ? `PokéMotus #${dailyNum()}` : "PokéMotus (partie libre)";
     const lines = S.guesses.map(g => { const r = compare(g, S.secret); return COLS_DEF.slice(1).map(c => e[r[c.key].r]).join(""); });
-    return `${head} · trouvé en ${S.guesses.length} essai${S.guesses.length > 1 ? "s" : ""}\n` + lines.join("\n");
+    return `${head} · trouvé en ${S.guesses.length} essai${S.guesses.length > 1 ? "s" : ""}${S.hintsSeen ? "" : " · sans indices"}\n` + lines.join("\n");
   }
 
   function renderResult() {
@@ -164,6 +171,7 @@
             <div>Essais <b data-k="tries">0</b></div>
             <div data-k="dailyLabel">Défi <b data-k="dailyNum">#1</b></div>
             <div class="sep"></div><div data-k="poolLabel"></div>
+            <button type="button" class="switch" role="switch" data-k="hintToggle"><i aria-hidden="true"></i>Indices : <span>activés</span></button>
           </div>
           <div data-k="regionSlot"></div>
           <div data-k="acSlot"></div>
@@ -188,6 +196,7 @@
       el.acSlot.replaceWith(el.ac.el);
       el.emptySpr.replaceWith(spr(25, 56, "shadow"));
       el.daily.onclick = startDaily;
+      el.hintToggle.onclick = () => { S.hintsOn = !S.hintsOn; store.set("pm-hints", S.hintsOn); render(false); };
       el.free.onclick = () => { if (S.mode !== "free") startFree(); };
       // Choisir des régions lance une partie libre sur ces régions
       PA.onRegions(() => { if (!root.hidden || S.mode === "free") startFree(); });
