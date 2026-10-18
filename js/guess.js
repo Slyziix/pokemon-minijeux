@@ -14,7 +14,7 @@ PA.guessGame = cfg => {
     const p = pool();
     let t = p.length ? PA.rand(p) : null;
     if (p.length > 1) while (t === S.target) t = PA.rand(p);
-    Object.assign(S, { target: t, wrong: [], done: false, won: false });
+    Object.assign(S, { target: t, wrong: [], done: false, won: false, revealed: [] });
     cfg.onNew?.(S);
     render();
     if (!root.hidden) el.ac.input.focus({ preventScroll: true });
@@ -52,11 +52,21 @@ PA.guessGame = cfg => {
     el.tries.replaceChildren(...Array.from({ length: MAX }, (_, i) => h("i", { className: i < S.wrong.length ? "used" : (S.won && i === S.wrong.length ? "won" : "") })));
     el.triesLabel.textContent = S.done ? "" : `${MAX - S.wrong.length} essai${MAX - S.wrong.length > 1 ? "s" : ""} restant${MAX - S.wrong.length > 1 ? "s" : ""}`;
     el.wrong.replaceChildren(...S.wrong.map(p => h("span", { title: p.name }, spr(p.id, 28), p.name)));
-    el.hints.replaceChildren(...(cfg.hints || []).map(x => {
-      const open = S.wrong.length >= x.after || S.done, left = x.after - S.wrong.length;
-      const d = h("div", { className: "hint" + (open ? "" : " locked") });
-      const body = open ? x.get(S.target, S.done) : `après ${left} erreur${left > 1 ? "s" : ""}`;
-      if (body instanceof Node) d.append(body); else d.append(h("div", { innerHTML: `<strong>${x.label}</strong><br>${body}` }));
+    // Un indice se débloque après des erreurs, mais ne s'affiche que si le joueur clique dessus
+    el.hints.replaceChildren(...(cfg.hints || []).map((x, i) => {
+      const unlocked = S.wrong.length >= x.after, left = x.after - S.wrong.length;
+      const shown = S.done || S.revealed.includes(i);
+      const d = h("div", { className: "hint" + (unlocked || S.done ? "" : " locked") });
+      if (shown) {
+        const body = x.get(S.target, S.done);
+        if (body instanceof Node) d.append(body); else d.append(h("div", { innerHTML: `<strong>${x.label}</strong><br>${body}` }));
+      } else if (unlocked) {
+        const b = h("button", { type: "button", className: "btn", textContent: "Voir l'indice" });
+        b.onclick = () => { S.revealed.push(i); render(); };
+        d.append(h("div", { innerHTML: `<strong>${x.label}</strong><br>` }, b));
+      } else {
+        d.append(h("div", { innerHTML: `<strong>${x.label}</strong><br>débloqué après ${left} erreur${left > 1 ? "s" : ""}` }));
+      }
       return d;
     }));
     el.ac.input.disabled = S.done;

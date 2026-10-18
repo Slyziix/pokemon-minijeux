@@ -25,6 +25,16 @@ puis ouvrir http://localhost:8000.
 
 Il peut aussi être publié tel quel sur GitHub Pages, Netlify ou Vercel.
 
+## Publier une mise à jour
+
+Le numéro de version est écrit dans `index.html`, à la fin des adresses des fichiers (`?v=1.1.0`). À chaque mise à jour, augmente-le sur toutes ces lignes, par exemple :
+
+```bash
+sed -i 's/?v=1.1.0/?v=1.2.0/g' index.html
+```
+
+Les navigateurs voient alors de nouvelles adresses et rechargent les fichiers au lieu d'utiliser leur cache. Le numéro s'affiche en bas de chaque page.
+
 ## Structure
 
 ```

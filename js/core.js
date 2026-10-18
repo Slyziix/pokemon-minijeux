@@ -2,6 +2,11 @@
 window.PA = (() => {
   const COLS = 32, SRC = 96;
   const PA = { dex: [], byId: new Map(), games: [] };
+  // Version lue dans l'adresse de ce script (core.js?v=…), fixée dans index.html
+  PA.VERSION = new URL(document.currentScript.src).searchParams.get("v") || "dev";
+  const withV = path => `${path}?v=${encodeURIComponent(PA.VERSION)}`;
+  // Adresse absolue : une url() relative passée par une variable CSS serait lue depuis css/
+  document.documentElement.style.setProperty("--sheet", `url("${new URL(withV("data/sprites.png"), document.baseURI).href}")`);
 
   PA.store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
@@ -161,8 +166,8 @@ window.PA = (() => {
   PA.boot = () => {
     const img = new Image();
     img.onload = () => { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; sheetCtx = c.getContext("2d", { willReadFrequently: true }); sheetCtx.drawImage(img, 0, 0); };
-    img.src = "data/sprites.png";
-    fetch("data/pokemon.json").then(r => r.json()).then(data => {
+    img.src = withV("data/sprites.png");
+    fetch(withV("data/pokemon.json")).then(r => r.json()).then(data => {
       PA.dex = data;
       data.forEach(p => { p.key = PA.norm(p.name); PA.byId.set(p.id, p); });
       const main = document.querySelector("main");
@@ -172,6 +177,7 @@ window.PA = (() => {
         g.mount(sec);
       });
       document.querySelectorAll(".regions").forEach(drawRegions);
+      document.getElementById("version").textContent = "v" + PA.VERSION;
       renderHome();
       route();
     });

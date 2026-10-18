@@ -49,7 +49,9 @@
   }
   function startFree() {
     S.mode = "free";
-    S.secret = PA.rand(PA.pool()); S.guesses = []; S.won = false; S.revealed = [];
+    const p = PA.pool(), prev = S.secret;
+    do S.secret = PA.rand(p); while (p.length > 1 && S.secret === prev);
+    S.guesses = []; S.won = false; S.revealed = [];
     render(false);
   }
 

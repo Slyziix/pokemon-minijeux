@@ -8,7 +8,7 @@
   PA.guessGame({
     id: "silhouette", name: "Qui est ce Pokémon ?", short: "Silhouette", mon: 94, art: "shadow",
     text: "Une silhouette noire, cinq essais. Des indices se débloquent à chaque erreur.",
-    intro: "Reconnais le Pokémon à sa silhouette. Tu as cinq essais, et chaque erreur débloque un indice.",
+    intro: "Reconnais le Pokémon à sa silhouette. Tu as cinq essais, et chaque erreur débloque un indice, que tu peux consulter ou non.",
     hints: [typesHint, genHint, initialHint],
     clue(stage, t, wrong, done) {
       stage.className = "stage bg-rays";
