@@ -5,7 +5,7 @@ Un site de mini-jeux sur les 1025 Pokémon des neuf générations, en français.
 ## Les jeux
 
 - **PokéMotus** : devine le Pokémon mystère grâce à ses types, son habitat, sa couleur, son stade d'évolution, sa taille, son poids et sa génération. Un défi du jour commun à tous, et des parties libres.
-- **Cinq Familles** : 25 Pokémon à regrouper en 5 familles de 5 qui partagent un point commun (type, région, faiblesse, taille…). Quatre erreurs autorisées.
+- **Cinq Familles** : 25 Pokémon à regrouper en 5 familles de 5 qui partagent un point commun (type, région, faiblesse, taille…). Pas de limite d'erreurs, et un bouton « Abandonner » pour révéler la solution et passer à une nouvelle grille.
 - **Qui est ce Pokémon ?** : reconnais le Pokémon à sa silhouette.
 - **Devine la description** : retrouve le Pokémon décrit par une entrée du Pokédex.
 - **Flou & Zoom** : une image floue ou très zoomée qui se précise à chaque erreur.
@@ -27,10 +27,10 @@ Il peut aussi être publié tel quel sur GitHub Pages, Netlify ou Vercel.
 
 ## Publier une mise à jour
 
-Le numéro de version est écrit dans `index.html`, à la fin des adresses des fichiers (`?v=1.1.0`). À chaque mise à jour, augmente-le sur toutes ces lignes, par exemple :
+Le numéro de version est écrit dans `index.html`, à la fin des adresses des fichiers (`?v=1.2.0`). À chaque mise à jour, augmente-le sur toutes ces lignes, par exemple :
 
 ```bash
-sed -i 's/?v=1.1.0/?v=1.2.0/g' index.html
+sed -i 's/?v=1.2.0/?v=1.3.0/g' index.html
 ```
 
 Les navigateurs voient alors de nouvelles adresses et rechargent les fichiers au lieu d'utiliser leur cache. Le numéro s'affiche en bas de chaque page.

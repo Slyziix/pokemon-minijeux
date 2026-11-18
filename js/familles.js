@@ -1,7 +1,7 @@
 /* Cinq Familles : 25 Pokémon à regrouper en 5 familles de 5 qui partagent un point commun. */
 (() => {
   const { h, spr, store, esc } = PA;
-  const SIZE = 5, GROUPS = 5, LIVES = 4;
+  const SIZE = 5, GROUPS = 5;
 
   /* Table des types : attaquant -> [super efficace], [peu efficace], [sans effet] */
   const CHART = {
@@ -125,9 +125,16 @@
     } else {
       S.mistakes++;
       S.msg = n === SIZE - 1 ? "Presque ! Il n'y a qu'un intrus." : "Raté, ces cinq-là ne vont pas ensemble.";
-      if (S.mistakes >= LIVES) finish(false);
     }
     save(); render(true);
+  }
+  /* Abandon : les familles sont révélées et la partie se termine (perdue pour la grille du jour). */
+  function giveUp() {
+    if (S.over || !S.groups) return;
+    if (S.mode === "daily" && !confirm("Abandonner la grille du jour ? Les familles seront révélées et ta série repartira de zéro.")) return;
+    S.sel.clear();
+    finish(false);
+    save(); render();
   }
   function finish(won) {
     S.over = true; S.won = won; S.msg = "";
@@ -162,7 +169,7 @@
       el.actions.hidden = true; el.end.hidden = true; return;
     }
     el.actions.hidden = S.over;
-    el.lives.replaceChildren(...Array.from({ length: LIVES }, (_, i) => h("i", { className: i < LIVES - S.mistakes ? "" : "lost" })));
+    el.mistakes.textContent = S.mistakes;
     const shown = S.over ? [...S.found, ...S.groups.map((_, i) => i).filter(i => !S.found.includes(i))] : S.found;
     el.found.replaceChildren(...shown.map(groupBar));
     const left = S.order.filter(p => !shown.includes(groupOf(p)));
@@ -182,9 +189,9 @@
     el.end.hidden = !S.over;
     if (S.over) {
       const won = S.found.length === GROUPS;
-      const text = `${S.mode === "daily" ? `Cinq Familles #${dailyNum()}` : "Cinq Familles"} · ${won ? `${S.mistakes} erreur${S.mistakes > 1 ? "s" : ""}` : "perdu"}\n` +
+      const text = `${S.mode === "daily" ? `Cinq Familles #${dailyNum()}` : "Cinq Familles"} · ${won ? `${S.mistakes} erreur${S.mistakes > 1 ? "s" : ""}` : "abandon"}\n` +
         S.history.map(r => r.map(i => ["🟨", "🟩", "🟦", "🟪", "🟥"][i]).join("")).join("\n");
-      el.end.innerHTML = `<div><strong>${won ? "Toutes les familles sont réunies !" : "Plus de Poké Balls…"}</strong><br>${won ? `Avec ${S.mistakes} erreur${S.mistakes > 1 ? "s" : ""}.` : "Voici les familles qu'il fallait trouver."}${S.mode === "daily" ? " Nouvelle grille demain." : ""}</div>`;
+      el.end.innerHTML = `<div><strong>${won ? "Toutes les familles sont réunies !" : "Grille abandonnée"}</strong><br>${won ? `Avec ${S.mistakes} erreur${S.mistakes > 1 ? "s" : ""}.` : "Voici les familles qu'il fallait trouver."}${S.mode === "daily" ? " Nouvelle grille demain." : ""}</div>`;
       const pre = h("pre", { className: "share-text", textContent: text });
       const copy = h("button", { type: "button", className: "btn primary", textContent: "Copier le résultat" });
       const selectPre = () => { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); copy.textContent = "Texte sélectionné, copie-le"; };
@@ -202,7 +209,7 @@
       root = sec;
       sec.innerHTML = `
         <div class="game-head">
-          <div><h1>Cinq Familles</h1><p>Regroupe les 25 Pokémon en 5 familles de 5 qui ont un point commun&nbsp;: un type, une région, une faiblesse, une taille… Sélectionne cinq Pokémon puis valide. Tu as droit à quatre erreurs.</p></div>
+          <div><h1>Cinq Familles</h1><p>Regroupe les 25 Pokémon en 5 familles de 5 qui ont un point commun&nbsp;: un type, une région, une faiblesse, une taille… Sélectionne cinq Pokémon puis valide. Pas de limite d'erreurs&nbsp;: si tu sèches, abandonne pour voir la solution.</p></div>
           <div class="modes" role="group" aria-label="Mode de jeu">
             <button data-k="daily" type="button" aria-pressed="true">Grille du jour</button>
             <button data-k="free" type="button" aria-pressed="false">Partie libre</button>
@@ -210,7 +217,7 @@
         </div>
         <div class="console">
           <div data-k="regionSlot"></div>
-          <div class="status"><div data-k="label"></div><div class="sep"></div><div>Erreurs restantes</div><div class="lives" data-k="lives"></div></div>
+          <div class="status"><div data-k="label"></div><div class="sep"></div><div>Erreurs</div><strong data-k="mistakes">0</strong></div>
         </div>
         <div class="fam-found" data-k="found"></div>
         <div class="fam-grid" data-k="grid"></div>
@@ -218,6 +225,7 @@
         <div class="fam-actions" data-k="actions">
           <button type="button" class="btn" data-k="shuffle">Mélanger</button>
           <button type="button" class="btn" data-k="clear">Tout désélectionner</button>
+          <button type="button" class="btn" data-k="giveup">Abandonner</button>
           <button type="button" class="btn primary" data-k="submit">Valider</button>
         </div>
         <div class="win fam-end" data-k="end" hidden></div>
@@ -230,6 +238,7 @@
       el.shuffle.onclick = () => { S.order = shuffle(S.order, Math.random); render(); };
       el.clear.onclick = () => { S.sel.clear(); S.msg = ""; render(); };
       el.submit.onclick = submit;
+      el.giveup.onclick = giveUp;
       PA.onRegions(() => { if (!root.hidden || S.mode === "free") startFree(); });
       startDaily();
     },
